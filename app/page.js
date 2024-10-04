@@ -6,29 +6,36 @@ import {getJson} from 'serpapi';
 
 export default function Home() {
 
-  const [data, setData] = useState();
+  const [data, setData] = useState(null);
+  const [authorInput, setAuthorInput] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
+    console.log('inside');
     try {
-      getJson(
-        {
-          engine: "google_scholar_author",
-          author_id: "EicYvbwAAAAJ",
-          num:200,
-          api_key: process.env.NEXT_PUBLIC_API_KEY,
-        },
-        (json) => {
-          console.log(json);
-          setData(json);
-        }
-      );
+      const response = await fetch('http://localhost:5000/search', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ author: authorInput })
+      });
+      
+      const publications = await response.json();
+      setData(publications);
+      console.log(data);
     } catch (error) {
-      console.log(error.message);
-      setLoading(false);
+        console.error('Error:', error);
+        setData(null);
+        
     }
   }
 
+  const handleAuthorInput = (e) => {
+    setAuthorInput(e);
+  }
+
+  
   return (
     <div className="h-screen w-screen flex flex-col items-center pt-10">
       <h1 className="font-extrabold text-[5rem]">Faculty Flux</h1>
@@ -42,6 +49,8 @@ export default function Home() {
           SEARCH FOR PUBLICATIONS
         </label>
         <input
+          value={authorInput}
+          onChange = {(e)=>handleAuthorInput(e.target.value)}
           className="w-[60vw] h-[6vh]  text-black text-[1.4rem] px-5 rounded-md"
           placeholder="Enter Faculty Name"
         />
@@ -52,21 +61,21 @@ export default function Home() {
           SEARCH
         </button>
       </div>
-      {/* https://scholar.google.com/citations?hl=en&user=rJliK1UAAAAJ */}
-
+      
       {data && (
         <div className="px-20">
           <h1 className="font-bold text-[1.3rem]">
-            Author: {data.author.name}
+            Author: {authorInput}
           </h1>
           <h1 className="font-bold text-[1.3rem]">Articles:</h1>
-          {data["articles"].map((element, index) => (
+          {data.publications.map((element, index) => (
             <div key={index} className="flex gap-5">
               <p className="font-bold text-[1.3rem]">{index + 1}</p>
               <h1 className="font-medium text-[1.3rem]">{element.title}</h1>
+              <a href={element.link}>Link</a>
             </div>
           ))}
-          {/* 5bdc9e6a1aafdb8a94cbfd4bf85aa23b36c648293df4b509f83a73ec9dbdf327 */}
+          
         </div>
       )}
     </div>
