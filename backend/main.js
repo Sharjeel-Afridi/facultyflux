@@ -3,9 +3,9 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 
-// const multer = require('multer');
-// const fs = require('fs');
-// const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.NEXT_PUBLIC_PORT || 5000;
@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // Set up multer for file uploads
-// const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: 'uploads/' });
 
 // Function to read the BibTeX file and extract author information
 function readBibTeX(filePath) {
@@ -60,25 +60,25 @@ app.post('/search', async (req, res) => {
 
 })
 // POST endpoint to handle file upload and search
-// app.post('/search', upload.single('bibtex'), async (req, res) => {
-//     const filePath = path.join(__dirname, req.file.path);
-//     const author = readBibTeX(filePath);
+app.post('/upload', upload.single('bibtex'), async (req, res) => {
+    const filePath = path.join(__dirname, req.file.path);
+    const author = readBibTeX(filePath);
 
-//     if (author) {
-//         try {
-//             const publications = await searchScholar(author);
-//             res.json({ author, publications });
-//         } catch (error) {
-//             console.error('Error during search:', error);
-//             res.status(500).json({ error: 'Failed to fetch publications' });
-//         }
-//     } else {
-//         res.status(400).json({ error: 'No author found in the BibTeX file.' });
-//     }
+    if (author) {
+        try {
+            const publications = await searchScholar(author);
+            res.json({ author, publications });
+        } catch (error) {
+            console.error('Error during search:', error);
+            res.status(500).json({ error: 'Failed to fetch publications' });
+        }
+    } else {
+        res.status(400).json({ error: 'No author found in the BibTeX file.' });
+    }
 
-//     // Clean up uploaded file
-//     fs.unlinkSync(filePath);
-// });
+    // Clean up uploaded file
+    fs.unlinkSync(filePath);
+});
 
 // Start the server
 app.listen(PORT, () => {
