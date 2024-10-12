@@ -12,14 +12,13 @@ import { Download, FileSpreadsheet, FileText, Upload, ChevronDown, ChevronUp } f
 
 
 type Publication = {
-  title: string;
-  link: string;
+  data: ArrayBuffer;
 };
 
 
 export default function PublicationSummaryGenerator() {
   const [facultyName, setFacultyName] = useState("")
-  const [publications, setPublications] = useState<Publication[]>([])
+  // const [publications, setPublications] = useState<Publication[]>([])
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null)
@@ -39,8 +38,9 @@ export default function PublicationSummaryGenerator() {
           body: JSON.stringify({ author: facultyName })
       });
       
-      const data = await response.json();
-      setPublications(data.publications)
+      const record = await response.json();
+      // setPublications(record.publications)
+      setData(record.publications);
 
     } catch (error) {
         console.error('Error:', error);
@@ -69,8 +69,9 @@ export default function PublicationSummaryGenerator() {
         });
 
         if (response.ok) {
-          const publications = await response.json();
-          setData(publications);
+          const record = await response.json();
+          setData(record.publications);
+          // console.log(publications);
           // setResponse(data.response); // Set the response if needed
         } else {
           alert("Failed to upload file.");
@@ -107,23 +108,30 @@ export default function PublicationSummaryGenerator() {
       return newSet
     })
   }
+  // let publicationsArray;
+  // if(data){
+  //   publicationsArray = data;
+  // }else{
+  //   publicationsArray = publications;
+  // }
 
-  const renderPublicationTable = (publications: Publication[]) => (
+  const renderPublicationTable = () => (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Title</TableHead>
-          <TableHead>Year</TableHead>
+          <TableHead>Authors</TableHead>
           {/* <TableHead>{type === 'journals' ? 'Journal' : 'Conference'}</TableHead> */}
-          <TableHead>Summary</TableHead>
+          <TableHead>DOI</TableHead>
         </TableRow>
       </TableHeader>
         <TableBody>
-        {publications.map((pub, index) => (
+        {data.map((pub, index) => (
           <React.Fragment key={index}>
             <TableRow>
               <TableCell>{pub.title}</TableCell>
-              <TableCell><a href={pub.link} target="_blank" rel="noopener noreferrer">{pub.link}</a></TableCell>
+              <TableCell>{pub.author || ''}</TableCell>
+              <TableCell>{pub.link ? (<a href={pub.link} >Click to open</a>) : pub.doi ? (<a href={`https://doi.org/${pub.doi}`} >Click to open</a>) : '-'}</TableCell>
               <TableCell>
                 <Button
                   variant="ghost"
@@ -156,17 +164,18 @@ export default function PublicationSummaryGenerator() {
   )
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Publication Summary Generator</h1>
+    <div className="flex flex-col  bg-gray-100 p-4 min-h-screen ">
+      <h1 className="text-3xl font-bold mb-4">Publication Summary Generator</h1>
       
       <form onSubmit={handleSubmit} className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 ">
           <div>
-            <Label htmlFor="faculty-name">Faculty Name</Label>
+            <Label htmlFor="faculty-name" className='text-lg'>Faculty Name</Label>
             <Input
               id="faculty-name"
               value={facultyName}
               onChange={(e) => setFacultyName(e.target.value)}
+              className='text-lg border-2 border-gray-500 py-4'
               required
             />
           </div>
@@ -192,14 +201,15 @@ export default function PublicationSummaryGenerator() {
           </div> */}
         </div>
         
-        <Button type="submit" className="mt-4" disabled={loading}>
-          {loading ? "Generating..." : "Generate Summary"}
+        <Button type="submit" className="mt-4 " disabled={loading}>
+          {loading ? "Searching..." : "Search"}
         </Button>
       </form>
-
+      
+      <h1 className='text-lg font-medium'>OR</h1>
       <div className="mb-4">
-          <Label htmlFor="file-upload">Upload Faculty Names (Excel)</Label>
-          <div className="flex items-center mt-1">
+          <Label htmlFor="file-upload">Upload Faculty Names (BibTex)</Label>
+          <div className="flex items-center pt-5">
             <Input
               id="file-upload"
               type="file"
@@ -214,10 +224,10 @@ export default function PublicationSummaryGenerator() {
               <Upload className="h-4 w-4 inline-block mr-2" />
               Choose file
             </Label>
-            <span className="ml-3 text-sm text-gray-500">
+            <span className="mx-3 text-sm text-gray-500">
               {file ? file.name : "No file chosen"}
             </span>
-            <Button onClick={handleUpload} type="submit" className="mt-4" disabled={loading}>
+            <Button onClick={handleUpload} type="submit" className="" disabled={loading}>
               {loading ? "Uploading..." : "Upload"}
             </Button>
           </div>
@@ -237,7 +247,7 @@ export default function PublicationSummaryGenerator() {
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Export to Excel
             </Button>
           </div>
-          {renderPublicationTable(publications)}
+          {data && renderPublicationTable()}
         </TabsContent>
         {/* <TabsContent value="conferences">
           <div className="flex justify-end mb-2">
