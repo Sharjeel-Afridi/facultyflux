@@ -21,14 +21,14 @@ export default function PublicationSummaryGenerator() {
   const [facultyName, setFacultyName] = useState("")
   const [publications, setPublications] = useState<Publication[]>([])
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<String | null>('');
   const [file, setFile] = useState<File | null>(null)
   const [expandedPublications, setExpandedPublications] = useState<Set<string>>(new Set())
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true);
+    setLoading('submit');
 
     try {
       const response = await fetch('http://localhost:5000/search', {
@@ -46,7 +46,30 @@ export default function PublicationSummaryGenerator() {
         console.error('Error:', error);
   }
 
-    setLoading(false)
+    setLoading('');
+  }
+
+  const handleSummary = async (e: String) => {
+    
+    setLoading('submit');
+
+    try {
+      const response = await fetch('http://localhost:5000/gemini-chat', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message: `${e}/pdf` })
+      });
+      
+      const result = await response.json();
+      console.log(result);
+
+    } catch (error) {
+        console.error('Error:', error);
+  }
+
+    setLoading('');
   }
 
   const handleFileUpload =async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +79,7 @@ export default function PublicationSummaryGenerator() {
   }
 
   const handleUpload = async () => {
-    setLoading(true);
+    setLoading('upload');
 
     if (file) {
       const formData = new FormData();
@@ -79,7 +102,7 @@ export default function PublicationSummaryGenerator() {
         console.error("Error:", error);
         alert("An error occurred while uploading the file.");
       } finally {
-        setLoading(false);
+        setLoading('');
       }
     } else {
       alert("No file selected.");
@@ -128,7 +151,10 @@ export default function PublicationSummaryGenerator() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => toggleSummary(pub.title)}
+                  onClick={() => {
+                    toggleSummary(pub.title);
+                    handleSummary(pub.link);
+                  }}
                   aria-expanded={expandedPublications.has(pub.title)}
                   aria-controls={`summary-${index}`}
                 >
@@ -192,8 +218,8 @@ export default function PublicationSummaryGenerator() {
           </div> */}
         </div>
         
-        <Button type="submit" className="mt-4" disabled={loading}>
-          {loading ? "Generating..." : "Generate Summary"}
+        <Button type="submit" className="mt-4" disabled={loading === 'submit' ? true : false}>
+          {loading === 'submit' ? "Generating..." : "Generate Summary"}
         </Button>
       </form>
 
@@ -217,8 +243,8 @@ export default function PublicationSummaryGenerator() {
             <span className="ml-3 text-sm text-gray-500">
               {file ? file.name : "No file chosen"}
             </span>
-            <Button onClick={handleUpload} type="submit" className="mt-4" disabled={loading}>
-              {loading ? "Uploading..." : "Upload"}
+            <Button onClick={handleUpload} type="submit" className="mt-4" disabled={loading === 'upload' ? true : false}>
+              {loading === 'upload' ? "Uploading..." : "Upload"}
             </Button>
           </div>
         </div>

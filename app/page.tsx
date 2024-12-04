@@ -20,14 +20,14 @@ export default function PublicationSummaryGenerator() {
   const [facultyName, setFacultyName] = useState("")
   // const [publications, setPublications] = useState<Publication[]>([])
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState('');
   const [file, setFile] = useState<File | null>(null)
   const [expandedPublications, setExpandedPublications] = useState<Set<string>>(new Set())
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true);
+    setLoading('submit');
 
     try {
       const response = await fetch('http://localhost:5000/search', {
@@ -46,7 +46,7 @@ export default function PublicationSummaryGenerator() {
         console.error('Error:', error);
   }
 
-    setLoading(false)
+    setLoading('');
   }
 
   const handleFileUpload =async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +56,7 @@ export default function PublicationSummaryGenerator() {
   }
 
   const handleUpload = async () => {
-    setLoading(true);
+    setLoading('upload');
 
     if (file) {
       const formData = new FormData();
@@ -80,7 +80,7 @@ export default function PublicationSummaryGenerator() {
         console.error("Error:", error);
         alert("An error occurred while uploading the file.");
       } finally {
-        setLoading(false);
+        setLoading('');
       }
     } else {
       alert("No file selected.");
@@ -202,7 +202,7 @@ export default function PublicationSummaryGenerator() {
         </div>
         
         <Button type="submit" className="mt-4 " disabled={loading}>
-          {loading ? "Searching..." : "Search"}
+          {loading === 'submit' ? "Searching..." : "Search"}
         </Button>
       </form>
       
@@ -228,7 +228,7 @@ export default function PublicationSummaryGenerator() {
               {file ? file.name : "No file chosen"}
             </span>
             <Button onClick={handleUpload} type="submit" className="" disabled={loading}>
-              {loading ? "Uploading..." : "Upload"}
+              {loading === 'upload' ? "Uploading..." : "Upload"}
             </Button>
           </div>
         </div>
